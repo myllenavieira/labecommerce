@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/myllenavieira/labecommerce#readme",
   "devDependencies": {
+    "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
     "@types/node": "^18.15.5",
     "ts-node-dev": "^2.0.0",
