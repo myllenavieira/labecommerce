@@ -9,7 +9,6 @@
     "dev": "ts-node-dev src/index.ts"
   },
   "repository": {
-    "type": "module",
     "url": "git+https://github.com/myllenavieira/labecommerce.git"
   },
   "keywords": [],
@@ -18,5 +17,9 @@
   "bugs": {
     "url": "https://github.com/myllenavieira/labecommerce/issues"
   },
-  "homepage": "https://github.com/myllenavieira/labecommerce#readme"
+  "homepage": "https://github.com/myllenavieira/labecommerce#readme",
+  "devDependencies": {
+    "@types/node": "^18.15.5",
+    "typescript": "^5.0.2"
+  }
 }
