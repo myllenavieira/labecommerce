@@ -1,0 +1,22 @@
+{
+  "name": "labecommerce-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc && node ./build/index.js",
+    "dev": "ts-node-dev src/index.ts"
+  },
+  "repository": {
+    "type": "module",
+    "url": "git+https://github.com/myllenavieira/labecommerce.git"
+  },
+  "keywords": [],
+  "author": "Myllena",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/myllenavieira/labecommerce/issues"
+  },
+  "homepage": "https://github.com/myllenavieira/labecommerce#readme"
+}
