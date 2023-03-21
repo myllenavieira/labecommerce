@@ -4,6 +4,12 @@ export type DPeople = {
     password: string
 }
 
+export type DUser = {
+    id: string,
+    email: string,
+    password: string
+}
+
 export type DProduct = {
     id: string,
     name: string,
