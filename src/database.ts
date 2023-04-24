@@ -39,7 +39,7 @@ for (let i in products){
 }
 
 
-export const purchase: DPurchase[] = [{
+export const purchases: DPurchase[] = [{
     userId: users[0].id,
     productId: products[0].id,
     quantity: products.length,
