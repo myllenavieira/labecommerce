@@ -38,68 +38,56 @@ app.get('/products', (req: Request, res: Response) => {
     }
 })
 
+//GetPurchasesById
+app.get("/users/:id/purchase", (req: Request, res: Response) => {
+    try {
+        const id = req.params.id
+        const idUser = users.find((user) => user.id === id)
+
+        if (!idUser) {
+            res.status(404)
+            throw new Error("Usuario não existe")
+        }
+        const PurchaseidUser = purchases.filter((p) => {
+            return p.userId === idUser.id
+        })
+        if (!PurchaseidUser[0]) {
+            res.status(201).send("Usuario não realizou nenhuma compra")
+        } else {
+            res.status(200).send(PurchaseidUser)
+        }
+
+    } catch (error: any) {
+        if (res.statusCode === 200) {
+            res.status(500) 
+        }
+
+        res.send(error.message)
+    }
+
+})
+
 //GetProductById
 app.get("/products/:id", (req: Request, res: Response) => {
     try {
         const id = req.params.id;
 
-        const result = products.find((product) => product.id === id);
-        if (!result) {
-            res.status(404);
-            throw new Error(
-                "O produto não existe em nosso banco de dados. Verifique o 'id'"
-            );
+        const result = products.filter((product) => {
+            return product.name.toLowerCase().includes(id.toLowerCase())
+        })
+
+        if (id.length < 1) {
+            res.status(400)
+            throw new Error("Id deve possuir pelo menos 1 caracter.")
         }
+
+        if (result.length < 1) {
+            res.status(404)
+            throw new Error("Produto não encontrado")
+        }
+
         res.status(200).send(result);
     } catch (error) {
-        console.log(error);
-        if (res.statusCode === 200) {
-            res.status(500);
-        }
-        res.send(error.message);
-    }
-})
-
-//GetProductByName
-app.get('/products', (req: Request, res: Response) => {
-    try {
-        const name = req.params.name;
-
-        const result = products.filter((product) => {return product.name.toLowerCase().includes(name.toLowerCase())});
-        if (!result) {
-            res.status(404);
-            throw new Error(
-                "O produto não existe em nosso banco de dados. Verifique o 'name'"
-            );
-        }
-        res.status(200).send(result);
-    } catch (error) {
-        console.log(error);
-        if (res.statusCode === 200) {
-            res.status(500);
-        }
-        res.send(error.message);
-    }
-})
-
-//GetPurchaseByUserId
-app.get("/purchase/:id", (req: Request, res: Response) => {
-    try {
-        const id = req.params.id;
-
-        const searchUserId = users.find((user) => user.id === id);
-        if (!searchUserId) {
-            res.status(404);
-            throw new Error("Usuário não existe. Verifique o 'id'");
-        }
-
-        const userPurchases = purchases.filter(
-            (purchase) => purchase.userId === id
-        );
-
-        res.status(200).send(userPurchases);
-    } catch (error) {
-        console.log(error);
         if (res.statusCode === 200) {
             res.status(500);
         }
@@ -108,11 +96,11 @@ app.get("/purchase/:id", (req: Request, res: Response) => {
 })
 
 //EditUserById
-app.put('/users', (req: Request, res: Response) => {
+app.put('/users/:id', (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const newEmail = req.body.email
-        const newPassword = req.body.password
+        const newEmail = req.body.email;
+        const newPassword = req.body.password;
 
         const searchUserId = users.find((user) => user.id === id);
 
@@ -150,7 +138,7 @@ app.put('/users', (req: Request, res: Response) => {
 })
 
 //EditProductById
-app.put('/products', (req: Request, res: Response) => {
+app.put('/products/:id', (req: Request, res: Response) => {
     try {
         const id = req.params.id;
         const newName = req.body.name
@@ -245,10 +233,10 @@ app.delete("/products/:id", (req: Request, res: Response) => {
     const id = req.params.id
 
     const searchUserId = users.find((user) => user.id === id);
-        if (!searchUserId) {
-            res.status(404);
-            throw new Error("Usuário não existe. Verifique o 'id'");
-        }
+    if (!searchUserId) {
+        res.status(404);
+        throw new Error("Usuário não existe. Verifique o 'id'");
+    }
 
     const indexToPurchase = purchases.findIndex((purchase) => {
         return purchase.userId === id
@@ -407,7 +395,7 @@ app.post("/products", (req: Request, res: Response) => {
 });
 
 //createPurchase
-app.post("/purchases", (req: Request, res: Response) => {
+app.post("/purchase", (req: Request, res: Response) => {
     try {
         const { userId, productId, quantity, totalPrice }: DPurchase = req.body;
 
