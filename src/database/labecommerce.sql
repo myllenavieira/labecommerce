@@ -13,7 +13,7 @@ VALUES
 
 SELECT*FROM users;
 
----------------------------------
+-------------------------------------------------------
 
 CREATE TABLE products (
     id TEXT PRIMARY KEY UNIQUE NOT NULL,
@@ -31,3 +31,73 @@ VALUES
 ('p005', 'Headset', 200.90,'Acessórios');
 
 SELECT*FROM products;
+-------------------------------------------------------
+
+
+-- Get All Users
+SELECT * FROM users;
+
+-- Get All Products
+SELECT * FROM products;
+
+-- Search Product by name
+SELECT * FROM products
+WHERE name = 'Iphone 10';
+
+-- Create User
+INSERT INTO users (id, email, password)
+VALUES ("u004", "daniela@email.com", "abc123");
+
+-- Create Product
+INSERT INTO products (id, name, price, category)
+VALUES ("p006", "Moletom Gamer", 199.99, "Roupas e calçados");
+
+-- Get Products by id
+SELECT * FROM products
+WHERE id = "p006";
+
+-- Delete User by id
+DELETE FROM users
+WHERE id = "u004";
+
+-- Delete Product by id
+DELETE FROM products
+WHERE id = "p006";
+
+-- Edit User by id
+UPDATE users
+SET
+	email = "dani@email.com",
+	password = "dan123"
+WHERE id = "u004";
+
+-- Edit Product by id
+UPDATE products
+SET
+	name = "Moletom básico",
+	price = 119.99,
+    category ="Roupas e calçados"
+WHERE id = "p006";
+
+INSERT INTO products (id, name, price, category)
+VALUES 
+("p007", "Mousepad", 26.50, "Acessórios"),
+("p008", "TV LCD", 679.90, "Eletrônicos"),
+("p009", "Notebook Lenovo", 3850.00, "Eletrnicos");
+
+
+--Get All Users
+SELECT * FROM users
+ORDER BY email ASC;
+
+-- Get All Products
+SELECT * FROM products
+ORDER BY price ASC
+LIMIT 20 OFFSET 0;
+
+SELECT * FROM products
+WHERE
+	price >= 300
+	and price <= 1000
+ORDER BY price ASC;
+
