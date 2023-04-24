@@ -13,22 +13,32 @@ app.listen(3001, () => {
     console.log('Servidor rodando na porta 3001')
 })
 
-app.get('/Ping',(req: Request, res: Response)=>{
-    res.send('Pong')
-})
-
+//GetAllUsers
 app.get('/users',(req: Request, res: Response)=>{
     res.send(users)
 })
 
+//GetAllProducts
 app.get('/products',(req: Request, res: Response)=>{
     res.send(products)
 })
 
+//GetAllPurchases
 app.get('/purchase',(req: Request, res: Response)=>{
     res.status(200).send(purchase)
 })
 
+//GetProductById
+app.get("/products/:id", (req: Request, res: Response) => {
+    res.status(200).send("Objeto Product encontrado.")
+})
+
+//GetPurchaseById
+app.get("/purchase/:id" , (req:Request, res:Response)=>{
+    res.status(200).send("Array de compras do user encontrado.")
+})
+
+//GetProductByName
 app.get('/products',( req: Request, res: Response)=>{
 
     const q = req.query.q as string
@@ -40,6 +50,7 @@ app.get('/products',( req: Request, res: Response)=>{
     res.send(productFilter)
 })
 
+//EditUser
 app.post('/users', (req: Request, res: Response)=>{
     const id = req.body.id
     const email = req.body.email
@@ -56,6 +67,7 @@ app.post('/users', (req: Request, res: Response)=>{
     res.status(201).send('Usuário criado com sucesso')
 })
 
+//EditProduct
 app.post('/products', (req: Request, res: Response)=>{
     const id = req.body.id
     const name = req.body.name
@@ -74,6 +86,7 @@ app.post('/products', (req: Request, res: Response)=>{
     res.status(201).send('Produto criado com sucesso')
 })
 
+//EditPurchase
 app.post('/purchase', (req: Request, res: Response)=>{
     const userId = req.body.userId
     const productId = req.body.productId
@@ -90,4 +103,39 @@ app.post('/purchase', (req: Request, res: Response)=>{
     purchase.push(newPurchase);
 
     res.status(201).send('Compras efetuadas com sucesso')
+})
+
+//DeleteUserById
+app.delete("/users/:id", (req:Request, res:Response)=>{
+    const id = req.params.id
+
+
+    const indexToRemove= users.findIndex((user)=>{
+        return user.id === id
+    })
+
+    if (indexToRemove >=0){
+        users.splice(indexToRemove,1)
+
+    }
+
+    res.status(200).send("User apagado com sucesso")
+
+})
+
+//DeleteProductById
+app.delete("/products/:id", (req:Request, res:Response)=>{
+    const id = req.params.id
+
+    const indexToRemove= products.findIndex((product)=>{
+        return product.id === id
+    })
+
+    if (indexToRemove >=0){
+        products.splice(indexToRemove,1)
+
+    }
+
+    res.status(200).send("Produto apagado com sucesso")
+
 })
