@@ -1,6 +1,6 @@
 import { products, purchases, users } from "./database";
 import { DProduct, DUser, DPurchase, Categoria } from "./types";
-
+import { db } from "./database/knex";
 import express, { Request, Response } from 'express';
 import cors from 'cors'
 
@@ -14,9 +14,10 @@ app.listen(3001, () => {
 })
 
 //GetAllUsers
-app.get('/users', (req: Request, res: Response) => {
+app.get('/users', async (req: Request, res: Response) => {
     try {
-        res.status(200).send(users);
+        const result = await db.raw(`SELECT * FROM users`)
+        res.status(200).send(result)
     } catch (error) {
         if (res.statusCode === 200) {
             res.status(500);
@@ -26,9 +27,10 @@ app.get('/users', (req: Request, res: Response) => {
 });
 
 //GetAllProducts
-app.get('/products', (req: Request, res: Response) => {
+app.get('/products', async (req: Request, res: Response) => {
     try {
-        res.status(200).send(products);
+        const result = await db.raw(`SELECT*FROM products`)
+        res.status(200).send(result)
     } catch (error) {
         console.log(error);
         if (res.statusCode === 200) {
@@ -39,7 +41,9 @@ app.get('/products', (req: Request, res: Response) => {
 })
 
 //GetPurchasesById
-app.get("/users/:id/purchase", (req: Request, res: Response) => {
+app.get("/users/:id/purchase", async (req: Request, res: Response) => {
+
+
     try {
         const id = req.params.id
         const idUser = users.find((user) => user.id === id)
@@ -49,7 +53,7 @@ app.get("/users/:id/purchase", (req: Request, res: Response) => {
             throw new Error("Usuario não existe")
         }
         const PurchaseidUser = purchases.filter((p) => {
-            return p.userId === idUser.id
+            return p.buyer_id === idUser.id
         })
         if (!PurchaseidUser[0]) {
             res.status(201).send("Usuario não realizou nenhuma compra")
@@ -57,29 +61,31 @@ app.get("/users/:id/purchase", (req: Request, res: Response) => {
             res.status(200).send(PurchaseidUser)
         }
 
-    } catch (error: any) {
-        if (res.statusCode === 200) {
-            res.status(500) 
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
         }
 
-        res.send(error.message)
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
     }
 
 })
 
 //GetProductById
-app.get("/products/:id", (req: Request, res: Response) => {
+app.get("/products/:id", async (req: Request, res: Response) => {
     try {
-        const id = req.params.id;
+        
+        const id = req.query.id
+        
+        const result = await db.raw(`SELECT*FROM products WHERE id= "${id}"; `)
 
-        const result = products.filter((product) => {
-            return product.name.toLowerCase().includes(id.toLowerCase())
-        })
-
-        if (id.length < 1) {
-            res.status(400)
-            throw new Error("Id deve possuir pelo menos 1 caracter.")
-        }
+        res.status(200).send(result)
 
         if (result.length < 1) {
             res.status(404)
@@ -93,6 +99,40 @@ app.get("/products/:id", (req: Request, res: Response) => {
         }
         res.send(error.message);
     }
+})
+//SearchProductByName
+app.get('/products/search', async (req: Request, res: Response) => {
+
+    try {
+
+        const name = req.query.name
+        
+        const result = await db.raw(`SELECT*FROM products WHERE name= "${name}"; `)
+
+        res.status(200).send(result)
+
+
+        if (result.length < 1) {
+            res.status(404)
+            throw new Error("Produto não encontrado")
+        }
+
+
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+
+
 })
 
 //EditUserById
@@ -193,16 +233,16 @@ app.put('/products/:id', (req: Request, res: Response) => {
 
 //EditPurchase
 app.put('/purchase', (req: Request, res: Response) => {
-    const userId = req.body.userId
-    const productId = req.body.productId
-    const quantity = req.body.quantity;
-    const totalPrice = req.body.totalPrice;
+    const buyer_id = req.body.buyer_id;
+    const id = req.body.id;
+    const paid = req.body.paid;
+    const total_price = req.body.total_price;
 
     const newPurchase: DPurchase = {
-        userId,
-        productId,
-        quantity,
-        totalPrice
+        buyer_id,
+        id,
+        total_price,
+        paid
     }
 
     purchases.push(newPurchase);
@@ -239,7 +279,7 @@ app.delete("/products/:id", (req: Request, res: Response) => {
     }
 
     const indexToPurchase = purchases.findIndex((purchase) => {
-        return purchase.userId === id
+        return purchase.buyer_id === id
     });
 
     if (indexToPurchase >= 0) {
@@ -256,7 +296,7 @@ app.delete("/purchase/:id", (req: Request, res: Response) => {
     const id = req.params.id
 
     const indexToRemove = purchases.findIndex((purchase) => {
-        return purchase.userId === id
+        return purchase.buyer_id === id
     })
 
     if (indexToRemove >= 0) {
@@ -269,46 +309,53 @@ app.delete("/purchase/:id", (req: Request, res: Response) => {
 })
 
 //createUser
-app.post("/users", (req: Request, res: Response) => {
+app.post("/users", async (req: Request, res: Response) => {
     try {
-        const { id, email, password }: DUser = req.body;
-        if (!id) {
-            res.status(400);
-            throw new Error("'id' deve ser passado no body");
+            const { id, name, email, password } = req.body as DUser
+            const newUser = {
+                id,
+                name,
+                email,
+                password
+            }
+            if (newUser !== undefined) {
+                if (!newUser.name || !newUser.password) {
+                    res.status(400)
+                    throw new Error("Nome ou senha faltando no cadastro")
+                }
+            }
+            if (newUser !== undefined) {
+                if (!newUser.id || !newUser.email) {
+                    res.status(400)
+                    throw new Error("Id ou email faltando no cadastro")
+                }
+            }
+    
+            const [ userId ] = await db.raw(`
+            SELECT * FROM users
+            WHERE id = ("${id}")
+        `)
+    
+        if (userId) {
+                res.status(404)
+                throw new Error("Id ja cadastrado")
         }
-        if (typeof id !== "string") {
-            res.status(400);
-            throw new Error("'id' deve ser do tipo 'string'");
+    
+        const [ userEmail ] = await db.raw(`
+            SELECT * FROM users
+            WHERE email = ("${email}")
+        `)
+    
+        if (userEmail) {
+                res.status(404)
+                throw new Error("Email ja cadastrado")
         }
-        if (!email) {
-            res.status(400);
-            throw new Error("'email' deve ser passado no body");
-        }
-        if (typeof email !== "string") {
-            res.status(400);
-            throw new Error("'email' deve ser do tipo 'string'");
-        }
-        if (!password) {
-            res.status(400);
-            throw new Error("'password' deve ser passado no body");
-        }
-        if (typeof password !== "string") {
-            res.status(400);
-            throw new Error("'password' deve ser do tipo 'string'");
-        }
-        const searchId = users.find((user) => user.id === id);
-        if (searchId) {
-            res.status(400);
-            throw new Error("Já existe uma conta com esse id");
-        }
-        const searchEmail = users.find((user) => user.email === email);
-        if (searchEmail) {
-            res.status(400);
-            throw new Error("Já existe uma conta com esse email");
-        }
-        const newUser: DUser = { id, email, password };
-        users.push(newUser);
-        res.status(201).send("Usuário cadastrado com sucesso!");
+            await db.raw(`
+                INSERT INTO users (id, name, email, password)
+                VALUES ("${id}", "${name}", "${email}", "${password}")
+            `)
+            
+        res.status(201).send('Usuario registrado com sucesso!')
     } catch (error) {
         console.log(error);
         if (res.statusCode === 200) {
@@ -319,72 +366,45 @@ app.post("/users", (req: Request, res: Response) => {
 });
 
 //createProduct
-app.post("/products", (req: Request, res: Response) => {
+app.post("/products", async (req: Request, res: Response) => {
     try {
-        const { id, name, price, category }: DProduct = req.body;
-
-        if (!id) {
-            res.status(400);
-            throw new Error("'id' deve ser passado no body");
+        
+        const { id, name, price, category } = req.body as DProduct
+        const newProduct = {
+            id,
+            name,
+            price,
+            category
+        }
+        if (newProduct !== undefined) {
+        if (!newProduct.id  || !newProduct.name|| !newProduct.category) {
+            res.status(400)
+            throw new Error("Informações faltando no cadastro de produtos")
         }
 
-        if (!name) {
-            res.status(400);
-            throw new Error("'name' deve ser passado no body");
-        }
+        if (newProduct.price < 1) {
+            res.status(400)
+            throw new Error("Preço faltando no cadastro de produtos")
+        }}
 
-        if (!price) {
-            res.status(400);
-            throw new Error("'price' deve ser passado no body");
-        }
+        const [ searchId ] = await db.raw(`
+					SELECT * FROM products
+					WHERE id = "${id}";
+				`) 
 
-        if (!category) {
-            res.status(400);
-            throw new Error("'category' deve ser passado no body");
-        }
+				if (searchId) {
+					res.status(404)
+					throw new Error("Id ja cadastrado")
+				}
 
-        if (id !== undefined) {
-            if (typeof id !== "string") {
-                res.status(400);
-                throw new Error("'id' deve ser do tipo 'string'");
-            }
-        }
 
-        if (name !== undefined) {
-            if (typeof name !== "string") {
-                res.status(400);
-                throw new Error("'name' deve ser do tipo 'string'");
-            }
-        }
+        await db.raw(`
+            INSERT INTO products (id, name, price, category)
+            VALUES ("${id}", "${name}", "${price}", "${category}")
+        `)
 
-        if (price !== undefined) {
-            if (typeof price !== "number") {
-                res.status(400);
-                throw new Error("'price' deve ser do tipo 'number'");
-            }
-        }
+        res.status(201).send('Produto registrado com sucesso!')
 
-        if (category !== undefined) {
-            if (
-                category !== Categoria.ACCESSORIES &&
-                category !== Categoria.CLOTHES_AND_SHOES &&
-                category !== Categoria.ELECTRONICS
-            ) {
-                res.status(400);
-                throw new Error(
-                    "'category' deve ter um tipo válido: 'Acessórios', 'Roupas e calçados', 'Eletrônicos', 'Beleza', 'Banho'"
-                );
-            }
-        }
-
-        const searchId = products.find((product) => product.id === id);
-        if (searchId) {
-            res.status(400);
-            throw new Error("Já existe um produto cadastrado com esse 'id'");
-        }
-        const newProduct: DProduct = { id, name, price, category };
-        products.push(newProduct);
-        res.status(201).send("Produto cadastrado com sucesso!");
     } catch (error) {
         console.log(error);
         if (res.statusCode === 200) {
@@ -395,77 +415,38 @@ app.post("/products", (req: Request, res: Response) => {
 });
 
 //createPurchase
-app.post("/purchase", (req: Request, res: Response) => {
+app.post("/purchase", async (req: Request, res: Response) => {
     try {
-        const { userId, productId, quantity, totalPrice }: DPurchase = req.body;
+        const {id, total_price, created_at, paid, buyer_id} = req.body
+        const newPurchase = {
+            id,
+            total_price,
+            created_at,
+            paid,
+            buyer_id
+        }
+        if (newPurchase.id.length < 1 ) {
+            res.status(400)
+            throw new Error("Informações incompletas, preencha o id")
+        }
 
-        if (!userId) {
-            res.status(400);
-            throw new Error("'userId' deve ser passado no body");
-        }
-        if (!productId) {
-            res.status(400);
-            throw new Error("'productId' deve ser passado no body");
-        }
-        if (!quantity) {
-            res.status(400);
-            throw new Error("'quantity' deve ser passado no body");
-        }
-        if (!totalPrice) {
-            res.status(400);
-            throw new Error("'totalPrice' deve ser passado no body");
-        }
-        if (userId !== undefined) {
-            if (typeof userId !== "string") {
-                res.status(400);
-                throw new Error("'userId' deve ser do tipo 'string'");
-            }
-        }
-        if (productId !== undefined) {
-            if (typeof productId !== "string") {
-                res.status(400);
-                throw new Error("'productId' deve ser do tipo 'string'");
-            }
-        }
-        if (quantity !== undefined) {
-            if (typeof quantity !== "number") {
-                res.status(400);
-                throw new Error("'quantity' deve ser do tipo 'number'");
-            }
-        }
-        if (totalPrice !== undefined) {
-            if (typeof totalPrice !== "number") {
-                res.status(400);
-                throw new Error("'totalPrice' deve ser do tipo 'number'");
-            }
-        }
-        const searchUserId = users.find((user) => user.id === userId);
-        if (!searchUserId) {
-            res.status(404);
-            throw new Error(
-                "'userId' deve corresponder à 'id' de um usuário cadastrado"
-            );
-        }
-        const searchProductId = products.find(
-            (product) => product.id === productId
-        );
-        if (!searchProductId) {
-            res.status(400);
-            throw new Error(
-                "'productId' deve corresponder à 'id' de um produto cadastrado"
-            );
-        }
-        if (searchProductId) {
-            if (searchProductId.price * quantity !== totalPrice) {
-                res.status(400);
-                throw new Error(
-                    "O valor total da compra não corresponde ao valor do produto vezes a quantidade informada"
-                );
-            }
-        }
-        const newPurchase: DPurchase = { userId, productId, quantity, totalPrice };
-        purchases.push(newPurchase);
-        res.status(201).send("Compra realizada com sucesso!");
+        const [ searchId ] = await db.raw(`
+					SELECT * FROM purchases
+					WHERE userId = "${id}";
+				`) 
+
+				if (searchId) {
+					res.status(404)
+					throw new Error("Id ja cadastrado")
+				}
+
+        
+        await db.raw(`
+            INSERT INTO purchase (id, name, price, category)
+            VALUES ("${id}", "${buyer_id}", "${total_price}", "${paid}")
+        `)
+        res.status(201).send('Purchase registrada com sucesso!')
+
     } catch (error) {
         console.log(error);
         if (res.statusCode === 200) {
