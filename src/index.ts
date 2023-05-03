@@ -363,10 +363,8 @@ app.get('/purchases/:id',async (req:Request,res:Response)=>{
     try {
         const id: string = req.params.id;
 
-    const result = await db.raw(`
-    SELECT * FROM purchases
-    WHERE id = "${id}";
-`)
+    const result = await db("purchases").where({ buyer_id: id }).first()
+
     res.status(200).send(result)
     
     } catch (error) {
