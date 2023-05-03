@@ -11,3 +11,4 @@ export const db = knex({
         max: 1
     } // número de conexões, esses valores são os recomendados para sqlite3
 })
+
