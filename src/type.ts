@@ -1,38 +1,36 @@
-import { type } from "os"
-
 export type TUser = {
-    id: string,
-    name: string,
-    email: string,
-    password: string|number,
+    id: string
+    name: string
+    email: string
+    password: string
+    created_at: string
 }
+
 export type TProduct = {
-    id: string,
-    name: string,
-    price: number,
-    description:string,
-    imagemUrl: string
+    id: string
+    name: string
+    price: number
+    description: string
+    category: Category
+    image_url: string
 }
- export type TPurchase = {    
-    id: string,
-    buyer_id: string,   
-    total_price:number,
-    paid: number, 
-    
-}
-export type TProductsInPurchase = {
-    id:string
-    buyer_id: string
+
+export type TPurchase = {
+    id: string
+    buyer: string
     total_price: number
-    paid:number
-    products:TProduct[]
+    created_at: string
+    paid: number
 }
-export type TPurchases_products = {
-    purchase_id: string, 
-    product_id: string,
-    quantity:number,
+
+export type TPurchaseProduct ={
+    purchase_id:string,
+    product_id:string,
+    quantity:number
 }
-export type TProductToBuy = {
-    productId: string,
-    quantity: number
-  }
+
+export enum Category {
+    ACESSORIES = "Acessórios",
+    CLOTHES_AND_SHOES = "Roupas e calçados",
+    ELECTRONICS = "Eletrônicos"
+}
